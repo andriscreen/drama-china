@@ -20,8 +20,12 @@
         </div>
         
         <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6 mb-8">
-          <DramaCard v-for="(drama, index) in forYouList" :key="index" :drama="drama" :loading="loadingForYou && pageForYou === 1" />
+          <DramaCard v-for="(drama, index) in forYouList" :key="index" :drama="drama" />
           <DramaCard v-if="loadingForYou" v-for="n in 5" :key="`loading-${n}`" :loading="true" />
+        </div>
+        
+        <div v-if="!loadingForYou && forYouList.length === 0" class="text-center py-10 text-white/50">
+           No dramas found.
         </div>
 
         <div class="flex justify-center" v-if="forYouList.length > 0">
@@ -44,6 +48,9 @@
           <DramaCard v-for="(drama, index) in trendingList" :key="drama.bookId" :drama="drama" :index="index" :isTrending="true" />
            <DramaCard v-if="loadingTrending" v-for="n in 5" :key="n" :loading="true" />
         </div>
+        <div v-if="!loadingTrending && trendingList.length === 0" class="text-center py-10 text-white/50">
+           No trending dramas found.
+        </div>
       </section>
 
       <!-- Latest Release -->
@@ -58,6 +65,9 @@
            <DramaCard v-for="drama in latestList" :key="drama.bookId" :drama="drama" />
            <DramaCard v-if="loadingLatest" v-for="n in 5" :key="n" :loading="true" />
         </div>
+        <div v-if="!loadingLatest && latestList.length === 0" class="text-center py-10 text-white/50">
+           No new releases found.
+        </div>
       </section>
 
     </div>
@@ -65,7 +75,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import api from '../services/api'
 import DramaCard from '../components/DramaCard.vue'
 
@@ -79,10 +89,12 @@ const pageForYou = ref(1)
 const loadingTrending = ref(true)
 const loadingLatest = ref(true)
 
+let isMounted = false
+
 const fetchHero = async () => {
   try {
     const response = await api.getHero()
-    if (response) {
+    if (isMounted && response) {
       if (Array.isArray(response.data) && response.data.length > 0) {
         const randomIndex = Math.floor(Math.random() * response.data.length)
         heroDrama.value = response.data[randomIndex]
@@ -105,7 +117,7 @@ const fetchForYou = async (reset = false) => {
   try {
     loadingForYou.value = true
     const response = await api.getForYou(pageForYou.value, 10)
-    if (response && response.data) {
+    if (isMounted && response && response.data) {
       const newDramas = response.data
       if (newDramas.length > 0) {
          // Filter out duplicates based on bookId
@@ -119,7 +131,7 @@ const fetchForYou = async (reset = false) => {
   } catch (e) {
      console.error('For You fetch error', e)
   } finally {
-    loadingForYou.value = false
+    if (isMounted) loadingForYou.value = false
   }
 }
 
@@ -131,13 +143,13 @@ const fetchTrending = async () => {
     try {
     loadingTrending.value = true
     const response = await api.getTrending()
-    if (response) {
+    if (isMounted && response) {
       trendingList.value = response.data || []
     }
   } catch (e) {
      console.error('Trending fetch error', e)
   } finally {
-    loadingTrending.value = false
+    if (isMounted) loadingTrending.value = false
   }
 }
 
@@ -145,21 +157,26 @@ const fetchLatest = async () => {
     try {
     loadingLatest.value = true
     const response = await api.getLatest()
-    if (response) {
+    if (isMounted && response) {
       latestList.value = response.data || []
     }
   } catch (e) {
      console.error('Latest fetch error', e)
   } finally {
-    loadingLatest.value = false
+    if (isMounted) loadingLatest.value = false
   }
 }
 
 onMounted(() => {
+  isMounted = true
   fetchHero()
   fetchForYou(true)
   fetchTrending()
   fetchLatest()
+})
+
+onUnmounted(() => {
+  isMounted = false
 })
 </script>
 

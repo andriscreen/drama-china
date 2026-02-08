@@ -5,10 +5,17 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 15000, // Increased timeout 
 })
 
-// Helper to normalize API response fields to app standard
+// Request interceptor to prevent caching
+apiClient.interceptors.request.use((config) => {
+  config.params = { ...config.params, _t: new Date().getTime() }
+  return config
+}, (error) => {
+  return Promise.reject(error)
+})
+
 // Helper to normalize API response fields to app standard
 const normalizeDrama = (item) => {
   if (!item) return item

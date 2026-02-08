@@ -31,7 +31,7 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6">
         <DramaCard v-for="drama in list" :key="drama.bookId" :drama="drama" :loading="loading && page === 1" />
         <DramaCard v-if="loading" v-for="n in 10" :key="`skeleton-${n}`" :loading="true" />
       </div>
@@ -52,7 +52,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import api from '../services/api'
 import DramaCard from '../components/DramaCard.vue'
 
@@ -60,6 +60,7 @@ const list = ref([])
 const loading = ref(false)
 const activeTab = ref('terbaru')
 const page = ref(1)
+let isMounted = false
 
 const fetchDubIndo = async (reset = false) => {
   if (loading.value) return
@@ -75,7 +76,7 @@ const fetchDubIndo = async (reset = false) => {
     // api.getDubIndo('terbaru', page)
     const response = await api.getDubIndo(activeTab.value === 'terbaru' ? 'terbaru' : 'terpopuler', page.value)
     
-    if (response && response.data) {
+    if (isMounted && response && response.data) {
       const newDramas = response.data
       if (newDramas.length > 0) {
          // Filter duplicates
@@ -89,7 +90,7 @@ const fetchDubIndo = async (reset = false) => {
   } catch (e) {
     console.error('Dub Indo fetch error', e)
   } finally {
-    loading.value = false
+    if (isMounted) loading.value = false
   }
 }
 
@@ -100,9 +101,15 @@ const loadMore = () => {
 watch(activeTab, (newVal) => {
    // Reset when tab changes
    fetchDubIndo(true)
+   window.scrollTo({ top: 0, behavior: 'smooth' })
 })
 
 onMounted(() => {
+  isMounted = true
   fetchDubIndo(true)
+})
+
+onUnmounted(() => {
+  isMounted = false
 })
 </script>

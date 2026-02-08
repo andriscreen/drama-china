@@ -50,7 +50,7 @@
              Results for "{{ searchQuery }}"
           </h2>
 
-          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6">
             <DramaCard v-for="drama in results" :key="drama.bookId" :drama="drama" :loading="loading" />
             <DramaCard v-if="loading && results.length === 0" v-for="n in 5" :key="n" :loading="true" />
           </div>
@@ -109,6 +109,7 @@ const performSearch = async (query) => {
       results.value = []
    } finally {
       loading.value = false
+      window.scrollTo({ top: 0, behavior: 'smooth' })
    }
 }
 

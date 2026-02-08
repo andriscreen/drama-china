@@ -10,7 +10,7 @@
         VIP Collection
       </h1>
 
-      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 md:gap-6">
         <DramaCard v-for="drama in list" :key="drama.bookId" :drama="drama" :loading="loading" />
         <DramaCard v-if="loading" v-for="n in 10" :key="`skeleton-${n}`" :loading="true" />
       </div>
@@ -23,29 +23,35 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import api from '../services/api'
 import DramaCard from '../components/DramaCard.vue'
 
 const list = ref([])
 const loading = ref(true)
+let isMounted = false
 
 const fetchVIP = async () => {
   try {
     loading.value = true
     const response = await api.getVIP()
-    if (response) {
+    if (isMounted && response) {
       list.value = response.data || []
     }
   } catch (e) {
     console.error('VIP fetch error', e)
-    list.value = []
+    if (isMounted) list.value = []
   } finally {
-    loading.value = false
+    if (isMounted) loading.value = false
   }
 }
 
 onMounted(() => {
+  isMounted = true
   fetchVIP()
+})
+
+onUnmounted(() => {
+  isMounted = false
 })
 </script>
